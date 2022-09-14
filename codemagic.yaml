@@ -1,0 +1,287 @@
+definitions:
+  scripts:
+    - &replace_bunlde_name
+      name: Replace bundle name
+      script: |
+        old_bundle="com.square.tapnyc"
+        echo "Replacing $old_bundle to $BUNDLE" 
+        find . -path ./release -prune -o -type f \( -name "*.plist" -o -name "BUCK" -o -name "*.json" -o -name "*.gradle" -o -name "*.xml" -o -name "*.java" -o -name "*.pbxproj" \) -print0 | xargs -0 sed -i -e "s/$old_bundle/$BUNDLE/g"
+        find ./android -name '*.*-e' -delete
+    - &replace_app_name
+      name: Replace app name
+      script: |
+        OLD_NAME="TAP NYC"
+        echo "Replacing $OLD_NAME to $APP_NAME" 
+        find . -type f \( -name "*.plist" -o -name "*.java" -o -name "*.pbxproj" \) -print0 | xargs -0 sed -i -e "s/$OLD_NAME/$APP_NAME/g"
+        ESCAPED=${APP_NAME/"'"/"\\'"}
+        ESCAPED=${ESCAPED/"&"/and}  
+        echo $ESCAPED
+        find . -type f \( -name "*.xml" \) -print0 | xargs -0 sed -i -e "s/$OLD_NAME/$ESCAPED/g"
+        find ./android -name '*.*-e' -delete
+    - &replace_team_id
+      name: Replace team ID
+      script: |
+        OLD_TEAM_ID=3W8F9V63YP
+        NEW_TEAM_ID=$(printf "import plistlib\nfrom pathlib import Path\nhome = str(Path.home())\nwith open(home + '/export_options.plist', 'rb') as fp:\n    pl = plistlib.load(fp)\nprint(pl['teamID'])\n" | python)
+        echo "Replacing $OLD_TEAM_ID to $NEW_TEAM_ID" 
+        find . -type f \( -name "*.plist" -o -name "*.java" -o -name "*.pbxproj" \) -print0 | xargs -0 sed -i -e "s/$OLD_TEAM_ID/$NEW_TEAM_ID/g"
+    - &replace_merchant_certificate
+      name: Replace merchant ID
+      script: |
+        OLD_TEAM_ID=3W8F9V63YP
+        NEW_TEAM_ID=$(printf "import plistlib\nfrom pathlib import Path\nhome = str(Path.home())\nwith open(home + '/export_options.plist', 'rb') as fp:\n    pl = plistlib.load(fp)\nprint(pl['teamID'])\n" | python)
+        if [ "$OLD_TEAM_ID" = "$NEW_TEAM_ID" ]; then
+            echo "Keeping Apple Pay entitlement merchant id as is" 
+        else
+            OLD_MERCHANT_ID="merchant.newline"
+            NEW_MERCHANT_ID="${APP_STORE_CONNECT_MERCHANT_ID}"
+            echo "Replacing Apple Pay entitlement to ${APP_STORE_CONNECT_MERCHANT_ID}" 
+            find . -type f \( -name "*.entitlements" \) -print0 | xargs -0 sed -i -e "s/$OLD_MERCHANT_ID/$NEW_MERCHANT_ID/g"
+            cat ./ios/FoodOrder/FoodOrder.entitlements
+        fi
+    - &replace_merchant_id
+      name: Replace merchant id
+      script: |
+        echo "export const applePayMerchantId = \"$APP_STORE_CONNECT_MERCHANT_ID\";export const merchantId = \"$MERCHANT_ID\"" > src/config/config.ts
+    - &download_assets
+      name: Download Assets
+      script: |
+        echo "$BUILD_ASSET"
+        curl -o build.zip "$BUILD_ASSET"
+        unzip -o ./build.zip
+        rm -rf ./build.zip
+    - &replace_google_service
+      name: Replace Google Service
+      script: |
+        echo "Replacing google service"
+        curl -o ./android/app/google-services.json "https://storage.googleapis.com/orda-firebase-service/$BUNDLE.json"
+        curl -o ./GoogleService-Info.plist "https://storage.googleapis.com/orda-firebase-service/$BUNDLE.plist"
+        cat ./GoogleService-Info.plist
+        cat ./android/app/google-services.json
+
+workflows:
+  react-native-android:
+    name: React Native Android
+    max_build_duration: 120
+    instance_type: linux
+    environment:
+      vars:
+        FCI_KEYSTORE_PATH: /tmp/keystore.keystore
+        FCI_KEYSTORE: Encrypted(Z0FBQUFBQmdUcm1zUzFtRGZvM2FrSzdQQzFnTGdFYjhCZXNGNFNvRGQ5OWRHa1VMSGpGWVFQa3RmNkEzTC1wOWg1bHhEVFI1SEQ1RjNCd2RMbDkxZk5rWDFZSzdGdTJsTFNpZVJTbnpWUXVzb01qamp6YUo1OW9OSnBNajlBc1p5VVVwaUJtUjY2by1HcmtOejBJcUZRNkRmNjQ3Y3g1MG1vYlM2aFNDNHkzanZJcFJwN1dJWExZdEZCTWFsMjJPWXpNcXBwSmRSYWFpWkloRmJMMmdiM3BKOVlIX1BVR2VMbkhhOUJ3eF9DX0E2bVNQSVdSMFJpb0hRTkFQbTI2dVJ1bldjUU14NHgzYk9fWkFKS0FzYzRfZ2VfcUpORVl2RnIxbTNGZjMtVHdzRnFBbjFnNnBmWElmbDFHR1hvZDY1NlI2cjVGckl1am1NQ3dRdzZUSGRDeHM3OV8yenpucGRGVVlKd1RwSVAyYmxxcXR3bGJYRkdZZU1jeEcwUTJGcG5hOVZUcGd2UjBOYmJYeFZKQjJ0dG02NnpBSU1uWWIySDRUc3d3QU1qNEt5ZFFaM3R6ZWVoOHpWVTlvd01kZW82V1ptd0FjNDUwZkJkcHM3dW93Ym42S1V2X05tc3V5UUFIZU1neERxUTZVVEhFT0JVVmVwX3poUTNXMmJfdjF4Z0w1X3hBQ0hUVDg0VERKZmdpdFZDV1QteTBpNGZhVTNaZU1DbUpSRi00a1dlQmQwUlpNc2Q4TXRoeVJlQ3RZNUNMZDdNeC14bGxrcER1OV9YVjJLOG55WTlhbTNUOF80Ml8tampnUkRKMXdPMGFxMVNMelgteVd3RC1CNVFReTJJTzA0R2lFdDdZbzQ0UWJMaWdXa3FiWWlCMWxfcHJ2OEhiNU1saUFmLWJhMTZ0QTk4eEZzbGVvQTRVZTdJN01KbTQ2dnJ6M1huOVFqSzExdnVEWllsUUFoNzU2TThOWDRWcHR5UUV0N014UTZDeXBvaEpjZUFaZnVuWS1iRG5zcGRvZEV1WGJ1T3R3cTVLM1liRkR0VmkyOFV4MXkzdFI2ZHBxekUyMnlKQVhDaVdFLTN5c2xvLUZqM0toR09nVmtfeVNmWGNURjluMkxNWWxFY2xrYjRnRDNIa2ozOXFpMTNiQnF5WF91M0drMERBYmt1UlpCUnRvZHZKS1UxUDYyaGNmcElRZzRtTEd4RXBEOWhYWW1NaXJHNHZ5ZUh1b05aVGVfaElDUERJaDBxTnpxWl9hVEFBZHNyMWl4Uy1KOS1qTkhmMm94dE1PQjNnVGdNVFFJQ3hUU2ZnMDNYenVHNk1PN2hwMlpFRkxxMlo1cGxQQkYyZ21SUC1zNEVLLWVyZWdTTjVRZlB2NjR2VkVSbE5zMmtkQ0UtcDhOUVNHdVB1NkNma0tmaDJ5Z21fSkVWTjBRb05VVnBPVWF1ZTFSekFoY2xmbGd2ZVJKc3RMMF82NDBQSU5uMjlNNzBmSkxPNkJDUzJwU1h0Q2ZYMFNyZ0V3amRSWDJaZ3ZXUS00ZVJPR3hPTmE0TXc0SnFFMmlfSTdZUlhlZXJ4OUxCUE1IaU5DNWY4dzVPT2QyYjgxTVRPajVuUFNvekVubjJLWThOM2M3Z3NwQXpmVVMxUjBQc1E5azVCN01qZEtMVTBKMjV2LWJldDU5YkxqS281R0p1emNTWEYxRXItcU55OWgxTU11TnlycVdtQkthaHB0ODdzQ0RPX2dtck5MaEtEY05WdUVsbXFBd3czSTktWEh3bl9sZmgza19ma25BOGFhTFFkVC12bDktTy1HYjhSZ0ViMmdUSXZJZHFydmFlaTNHZmpZNXp0WEpFNmx3bnVubzJDVGhETXNtdWhhenMyWFF5dDFqUW4zTFJhbEVWUFdnYURWc0xLSDg5SXRobGtJUVJpQmp3bGNlV2RLUk5nYi1mX3VWcGlIdUQzQjhVbF9xdUpPM3dFbFRrbERNeko1U2ZLLWJENmdVTmVqYi13cmszSU5qVUYycktYdldxc0pySFlmSjBKdW1GZmZrVTN6aFVlUkxXa3pLaEhMRDFzd0VIYUNSZUNLZkYzTmhMRWFwVGo0SnNzYS1HZHk3SW5CMnFzakVZOHFxM3J2dVUwTUVKb1E2R280dFZsNmVXd1p5cER2NFk2OFhiSFVmb293RHB1NFdMS0xuRWFyQXhKQy1Fb1hWdXhVb29nLV93WUl6dXhVdmhjeXhVRTlUZkFYbmxkaXd2S1FRUWlUVmdyQ2pmRGs1ZVg1a05hQURJMGl5anBKSl84Yjl2Z2FMMTJNbm50ZUY1STRla3ZzQmwta3VGSmVlMTVWdjVKTDBBLWFtZHloc2RTQ2VDVkxyWFlsVHZ1TTBrWTZ0czV1VDRYTFVxRXBRUzdXa2NiTnlVanY3d0JlQU5YclBUdll6bjBmTlB5QkJPZ0NNUGxSZTQzcUlpSFJLMkk4UFRZR1lCUEFhN3VnUmM1MGM2anUxb1UwRWZRVnJZX2NiUWlPWWI2SmVmR3llMFV0U1dFNGVVcGRKdl9ZSmtKMHp3cFo3UlljOTFsUm1jZ1JyRUhLMGJDTEhUU3BYQVBXZlNxS2lwbzFjQWJUb19GN05jc2RqMjFvQkQ2b09VV2pNTnQzajJvZzR6RmpzdnhjQjFlRXhVbkp0aFRRTTBjNVg0RU52dElDVWdqWEpjcFFqOWQyVkVMME53MzRkaFMxMXRKLTlLUjMyZG0yZlJHdUZfalppQ0xyeVFUeWRnNUxmRjdRRE5UTXNYVGNjbzllVFhSVlgxbnBjcm9rdTNseXZ5TzVicm5rZ2Y1ZTVZY2F6QnhqcnQ5M1I0SWE2ME10WDdJREdhakZmeTNNRUFxaXpMNHNFTHZWbWhQT21aOURCaHBOZjZROWxjaFRZYXhQVGVRaEFZci16WUhKQ25CTmZEMkxMUEJBc29EVUJ4ZjBpZTNqdzIxMGNIVktNZU5YdFZlNzlWQW9mZWU3cEppSVQzX2NRelVkbzducTgxbnQ0aUtzcUNVZWo4N3ZRWmVoaWVrQjNfRFJ2bVMyZ2JJbGpvdEhSWFlvYk1BSnQ4M05DUGd4bUxwSFBwbU5zNjQzR0R4UGpvSE5lUHZPT2NnQ0hzRDZSd0J2M2h3NlhuMzZQZ2RiNmczdmotNzIxS2tydmQ4c1JERGFkV3Y0a0VRSVRKblhDcTRpeVFpYzBGdU81MENVelRiVVlTSmFlRlZvbWdMbzZJdUJEWFpWTkNBcHRhYWtsV19jOHFJaURnSGRhRGZhb1BUcnl6UzBhbmZ0c25zZFY3Zlc4ZzFjUXVHdzZXWUJMSEhrdHRqU3JEeVFsUUpnN28ya1J2Tks5bjFlM19aRXA3WHllMDRBdlNjZEptYkx2a1ZiRnFuZDFoLWZQZ1R1bHFaRjh4czZfWlg3ZG1ZSS1XTU5CT2ZzTmUzZ3NqWDRHVVlRMHRVcTZzSEJrR3REX3lNSEVwVHUtNmtaTnE5WkFad2o2cDRWZk8ycEswYlBkQUMxeFhwZi0zbnFrNHY5TnB4eXVPenlKR1FoMVFQU0xQeWlpWmFHTWVnNVlEVVExb0pCczVPVkNwb3ZwXzlMT2FZaS1hSDhWdnljTkdxYnJ6c2NOU3hHRGY3cUxacXcwZHdJM2dXOEd0a0tXbGlrYVNGZHBOQ1JCZVlRS2lmZHFxa2hMZ0tfczJDZTlqYjlkZFlWSE4ySU5veVJRVjhQc1dSYmtTWksxdXd5LUptVFpaUzgyZG1jZUdGOVdKWkEwZnBBQWZUMmxXdkl0S2Q0eGRIRVg0VTlzc2IzYWs2QjRBR0pfMTdaX0lRdzlycHdBN19zb3BIQU5QMzhjVGpIYnJuazNUZkFxaWkyWTE1MXo1NE40SmdNeS1paWoxWnlyMVhpTlF3SU1vQ2duaDBuOGMza3ZlVG5kcXNHQkJEMVIzVFJlQllKV1V5VzRrN1dtQnZVV0N0cUcyZ0djMTkzX0NjTS01eDhXaXRLUDYzYWR6c2ZyQkNNZHhvMjVzUGdsWUFhdVNSU29iU2ZZeUhENDAwNFhFNzlOZms0bEtGelVLVVpkX29aQmdHT0hLUGppeDJIM1hyUHR4MXM0SHhGamc3NEVlUXpaVWp2V0swMDd5RkJsWTBuM0Zia1dTdVVnWVJVcHNJVW9TZllzdWRLTjB5aVpqcDhaYXp6dzZ2dDNJUFNPRU5CalI3RjNNV3pzTEVaeUFkUnBPUm55Z3lVYTV4LTl2U0VMYWJGWXI2a0JiY3ZNczhMQTdpa05aakIyODBUcDRWam10aXR5YlpoV2dVRHFwOVVRZktxdno3azJoUW15WFVoMF9BU0pYT1NfTFZIV1lsc01nalZOVDdpREszZ25YOVp3WF8xR2hGYkpYbmdmeXpMY3lMY2hjc3RYZzM5TXdnWFBnUWxNUWdraUxvaDJOTTZiY3doWVgtaXpDX1hZZ2txMVRGdjhLSERGTFZaNG5rS0ptdl8yVUlJT1cxTjZGUTZWcnJ1bFJoN29yN0Y0dXB1MzRzUlRtcG1oT1YtWEJUSGN1bkloanZKQjBVZUJRTlR2akpEakhuWFl1eXhaaGVQbHVreFpGclJ4RDVMb29PZ2hZbU9QWnk0bGxKUUM0cFZlZFVlTDk1M1A1bDNKN0puYUktNmt6MkdUZkd5U25lM0d2SXJBYnk2UjNfc0xjU0dKYUV4NWR0R3FTeHlIa211X2lqZElncTRYQkVsTzN5b2xKZGF1RjJQMDJUSjJwUERMbS05N2F6LVJnaFB2WGFTYUoxNUY2WlVvR184aGZZa3QwOERpZEZrUDNiZEFHUFNaRzZUR2pPcFFmQkRLcThBU3JDVUl3SXRsbDU0WTYzMWY1dndCdXpibHNkdkdCNzZwbVB4ZTc1NVg4RUhnS0wwVTROazNHcDlLdHdZYUJrMDhycmF4NU00MTNDMjRMRGJYNWdUTDAxQUtocXZxUVlfX0RfeEVzTFNUX1ZEYUpxYVFac1AtX2VsMm9fZUNUMGt0V0F4V2cwS08xdm5ZNHRvVHhjRHlHdXlGMUhDZHkzQjgxM045aXh1UF8yYURpWHJfV2NGMll1NUdnSUxSYTJfRWx5N0dhMGJ6aVJmSE82cW1QXzYyZWprZjgya1hoUkZYTDNMSkxJaFcwd0ZBUE1IX0RBRWZ4dUltSmY4MkNGaEVMNXZmVFlnejJDWnNST0ZHOHZkaUdsdktjWXFUY0xGTTVWR3RXbGxwdnV3aGZVVDlTa0lBdXVuQ1RTR0dMWUlkeUpLRWRIT0lSNDB1RHg4WWFkS0M1cnJUTEI5NlRkTGJsVVByYVRZQ1RiVVlCUTZIcmxsVkZ4emVuczVpTlFrRGFMb1VSc2xab2RXOTJZV1g0Q1ExTzVo)
+        FCI_KEYSTORE_PASSWORD: Encrypted(Z0FBQUFBQmdUcm9RVUl1d3FTY09lZm50WlY2Qi1WOUZhbUJRZHVhZ3ZNelNnT0dOQ2djdU50dzN4SlFrQlFMU243bEVqMlpIXzVUTTBzeGF6Ulp1d1VYNkE3SVJkcldiSFE9PQ==)
+        FCI_KEY_ALIAS: Encrypted(Z0FBQUFBQmdUcm42cWtnWklyYkROa3MyMWpKOGhQbmxOVThSLWRzM0pSWWR2dkc3cENJV1BVcU9NWEd3YmROV1JocXNLeG5uVnV1MGhiWnVFMWUwaDE2cG5Md0dEX0xLaUE9PQ==)
+        FCI_KEY_PASSWORD: Encrypted(Z0FBQUFBQmdUcm9RVUl1d3FTY09lZm50WlY2Qi1WOUZhbUJRZHVhZ3ZNelNnT0dOQ2djdU50dzN4SlFrQlFMU243bEVqMlpIXzVUTTBzeGF6Ulp1d1VYNkE3SVJkcldiSFE9PQ==)
+      node: 16.15.1
+    scripts:
+      - *download_assets
+      - *replace_bunlde_name
+      - *replace_app_name
+      - *replace_merchant_id
+      - *replace_google_service
+      - name: Install npm dependencies
+        script: |
+          yarn install
+      - name: Set Android SDK location
+        script: |
+          echo "sdk.dir=$HOME/programs/android-sdk-macosx" > "$FCI_BUILD_DIR/android/local.properties"
+      - name: Set up keystore
+        script: |
+          echo $FCI_KEYSTORE | base64 --decode > $FCI_KEYSTORE_PATH
+      - name: Build Android release
+        script: |
+          # build Android
+          cd android
+          ./gradlew assembleRelease
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+      - android/app/build/outputs/**/*.aab
+    publishing:
+      email:
+        recipients:
+          - roy@sudzy.co
+        notify:
+          success: true # To not receive a notification when a build succeeds
+          failure: true # To not receive a notification when a build fails
+      google_play:
+        credentials: Encrypted(Z0FBQUFBQmdUcUE3RE9GeDhMXzNvMXNqdWdwNHltc21xNHN5SmFtdnNrZnJ2M1NUVXJIaWZ3NGczQlRDdGxpMEdkNVVKVmNGLXZrYnJROUFPb0VlX3pqdVRuRG5qZEJaOFJvb1ByQUZCUFVzdnM5a3lFb2tUNWw5MFhHeC11UjF3b1lZWVJFTE5DLUo3WXdZQXIxZ0hFdHBpeEN6VFd2S2NVay0xemFIcXRBeGV0NVowUm9QaGhtTHdjMFlDS1VaUG5vazRtOXJ1YnVEWWlNbTlMMFRra1Fjc3Q3NV9SZzdLZml1bW5icFdoMmtyaXdpOWdpcklEeC1mRnNFelFWRW1EMzVsM0VYdk82UVZEQmVnQnp6Z2p4Qmdvb0NjOE1SdUhTSjMzbTRXc0w5Wm1Ra3hkdFRSZksxY19oWnNCWFFSakxOd29seHV1RjgzVUVVbms3SXppNnUyZTZPcUk3bk4ta3VDbkNaLWY5eXBiWTRTTlNpOVctdndJLXJJeDQ3Q0hCTjYxbE9hN1BveTZCZS0xMnFsd0hxMTU0U0VqOWRfdEhRNUJnOUs0OGJrZExaSlNpcU5aeGVDT1JVVVMxczhWc2pobzRyZjFTdllPZGkwQVJaUTczd3ItTkhvTkNaOThaWFBLVUJmcXc4MEFFRlFicEY4YlJSVk9BQm5YQ1pYYlJfWFE4ZlA0RzVrdG93cGRlRmJTRlRoV1pUMkJtTlNaQXV0YVI5UmpkeHo2cDBjMnN5cG1EaHFFdEJGeGJFME81bmY4MWVIcjdCbWlaZ0hUN1IzT3A5X1JtcHhLYVRsaldkU2prdHJYa0hhNGgyQXJpdEhMdUNkaG1vU282VmdXa01kNzlVdkROQjd0S3FNTkw1RXFiYy1DSUF4YlRPdjFtUkxGT0tHQXhaYnBpZlgwaVpETW84Um1UemwwTWZ1a2g2Z08xUk1jeWZMSFhXaWpHd0N4UEpDZzRhWWF3Q25SWmNqeHBYV0R5NE0wY2gzLUsyZWU2bXQxREJ2blc5ZEZFTWJEcm1ZcUN5aVNqWWNqdlFuX3ZzQXhpUUhKUGY0elhZRC1MRDUyeE1uTFlWWHk0cHN0YkQ1RWxGTzJTVGVoTDdtMG1JTkRKbmtubEZtLTI2V1VqbGFVcHY2RjYtZFVaejBodFA2X0JHbWhYcm9OWkpsZHFLc0JaaVdTOTRZUUhuSTdPVHJVTTFPMFoxdmVyTTcyODNfTnJib3FIQ0xkeVdXbkthaWsybHdPSkxNZUV0V3NDUURrVmtzckxPdUdyUURDZnJuTzJJbDQzdFpWODJDWVozTC1WT2trZGxlRXdlcmx0OEpQYlBJLWdwSW93cUdDblBzS2xQS0taQ3RiWWlBU3pUX0VOQzhZN0phQ1FGaVA2UXQ4YlphQVlZMlB0bW8zd2Z5RUF1b2Q0NVJrVFk5VXVfdFBZVWlubUlLc0lIMVVBWmdZUW5XSFRyTkZLdGhGY29PbWkxTy16ZG1LNnJPX1lQN21mejVSNHhOaVJNSjBuenh2dGxvSnA5SnlwdE00REdBcnFfWlU3NzA0V2oxTDQ0SnRSdk1ieC1EeWZQb3o0WHduSGg1M1FCQjFsaW5ETXA5Xy02WU45WjAxWHJRZ1FZTkszR3hPZGVDSXlweFRQVlU3TWI1NjQwUHVQdy1oVFpRVWlUZTcxdUNidUMwUGNkeGRubW5RM2FJaFVjRkM1Z2dRTDlscmN0TzNnNzRXbU9xWEdHdVpJMFRRa1BJc3l1aTFXUDV2c2RvT3VuenMwOW81c2s4X0hRd3RDMWhtM0dxSjJlS2JsWUpSdmNNbkNlaW9sTzNIbUVnemVkWkkyN0tOa3NnYWxGUVRUR0NnV2p3RG1fVEt3REliT0JuTTcxcW5VaGN3cGNPSzI5MHRXOXVXalk5TDdzUTFGa1dCQnQzbDBwWmRpZmNHZDdVd0xEa2UzMTliNlZocGM5cUQ4ZUk0SE5rR2Y5RDJodnRwY1pHdWh2TWFLMzAzM2Jhdmx1cUtaWXVta2h1VUZvQVlQVGVnUmtWQ3ZKcTNsZEtRSEViR09yd2xGeVQtOG5zUWZzWmUyN2pGWGFCMGR4dGRDRGdxaEJId1JzV1p3SEhrS25NS1dMcGNaYVQ4MnBqa0pMVTE2SkhXVGVjQnRtMEtrazFPbzIyX0hGbTdRSmZTRktFdEJEeGFWbWtFanotc1REMkJGRUNuWmt2bGx3OThySHozTmJBVXdBd1FWWmFVMVA5clVabHVmNndGUVFFQVJWYnhoa0NxZzVOZmFZUzJoWmo0OFR4NTFJRm5zTy1LREdPTkxDWktxaFc1TDc0cTg3enlBODZheVM3SFdLQWxKYjR4VUpTd2tRd2xXdnoyX3VtVjBoQ2c0UzZJNktTcHlvWDZtSl9QYlJ2OEdNVTB5ZFZKbm92RVY1YUQxczkwa2lMM2gtVFc4bmFDZmtFQ3NnWHJlc2J2dmpxRm5FWm5zcEFCaEhkbGdWQ3ptb1R2a011S3YtQjJiVENqVGVkUk9IaW0yRzVCN1hwczIxZVNiU3E1Q0tsS0hZX2tEZEpXY21YOXJyQjNUSzJZYTFEOGgyX2lTS3N3aVJFTFJvQmJpazAtcUc0dFRfY0tIeVI2b2N1aUx4b205S0JNa1VJX2x0STZ3RXltaF9EZEl5c2NPazV3WDM2bjdONmtON1F1R2R5ZVNvQlVWVkNGNU1QRzFoOU9tcTlhYWhiXzJ0dUQ5X01qdDd2R01UempDUEdZTDVvanJtZUp4eks2ZmNnSTJDQUZUci0ycU9jSDRHRHZzTVF3UFlTN1F6RXpER0NNblNKMmZyRE5MWi0xVjVTbWpZcldqcF9MQlZqMGVnSjVFMXdmZU05c253cWl6Zm9RcjMxNGhTMWo1VEJEeFE4YmhlRWQtOHUxWklaVmNlNnZ0V2xQaW9RV3k1d1hSUGFFVUNYaUpBRm0yR1VLVFlQWlNCSHpHS01OZVA1dUh3Q0tHRnRlWUpmcEN5bkNhTkl3MXdIRHJCZ3VJR0diRVNiV0Iwc21PcTJ4aWU2RU9Nc3V0Um9YUXNLeXJKRmVSV18xTkVodThzMTRfWGl3elBQNWR0SS1xZHRaYmxvU2t3Q1hwQUNfZnc2QnhaekNBSmpia0JBY25uR0VPb1lyRFhkRzlzcngzN0doVnJSS2ZnU1dXMGZYa0xYckNULVhzNmFRWnlXcUl0aFowZ2VIUUpRN09HM1NXalJzc2w3eDR5MWtWSGNVN2VCZTFCTGZOWkRWRnVwdEF2U0FfNUNKeFExUXpraFpVM0pXazZhQ1VJdmVNUWdSYTJ3dktrY0Z4VHF2Vl9uTDBvOElmQjFCS0pNOFNsQ1JWUUNUWml6dktBM1NocGtUTmRYYldwbGhuZ0xhcG5oV3FIOUlpaE9OYlFZMXhPRW5hNklQWGZJNVk5OWNzVUtQaGFxcTQtb0pEM2hWd1d3S2QxdzBQLWRsUGVGZ0I5NEdKbTFkTUFRSmszdU54cFJHUmNyLVVWVUNnYlcyc0FJTG5OS3J5VzdycU5VT1dsNTZmbGFfV254ZTAyd0IzOTNTdGREcVMyVUN5VlNBNHItNkhkbWRWLVNaN2FzbEN1NkxYb3JSbW1ZbUhmOWwta2RhYXZTRjR2Smttb0pHN3FrS1lId1cxR3ZzTE83MHVfQTJieUdmcWFIdmV0Yy14Tm1pclRaMl9TRTY4ZEJVdElERDRLNDlaWW5FWUt2MlVlZHlRdDR1SXVxd295bkdGU0dUV0ljeVNjZkdhYkdqa2FHQ0NCaEFkejRPa2xBUUM5WmJ6dlhmcVQ5OEVsQ0FwQjdvWkVDOXlIWjZWTGtVelB6UnU4LTlScGZKX1ZWR1E5VHJjMVpkVEo5TTE4UWhTVDQ5TEZHLXVPakVQSEl6dW1VYS1tSWhyMEJwR0ZidFBOd3RtS0FBYWM0cnYwMDY5d1BNTXlteDBhRDNwZGlueUJ2bHB5YVFLN2NJUTRabWozWFYwUXNsRFUtellpWTVPNGwxbFdnejlNaWd0bHkza3dHZTN1QlcyZ0kwSXgyMGE1Z1N5Q1VScDU5c3d3YzB5LTRZUXZJN2l5SDFTNzY5WUhCaVVMN0NGcElPem5SZkhTcG5MbmNTSGN0WHdsVkg3YzdUbFNUemN0eGkwRFJScmJvbDFGWUtGVTQ0Z3lDbmlBdVhLVkQ1ZGw0LU1scXNBRWk3b1lTSExTaE5iVm94bDc0eHVYSGtiUXdfbUI0ZXVHcnBObjZ4VXphcWFNVWtTYUJWdHdIQVMzSzUwX0xTMnVlT216dVdiMjQwQksxZjMwLVd5Zm91b211eEprNklBaHhnS3lqT2JCaEx3ZGxibl9yaG43VGlCVnV0LXpnM0FlZFlTMWhyZ0VLSnpJRElpMmpUSmkwWlZ5cXNKWk01UHRXNXVmbFItazE4YkVvcl9oV3gzblVJaUs3MWE4Mks4SUp2LVZncy1mR241WkI4NVpPR1FfcVpMMGlySzF0OGduekpLelZTZnZRNko3Y3JqMk5lZE5PWENLWHF1aWFDcThOSDRBakpFMkJ1eE9GenRvbXN6bkZaZ3gxZVZHRTZ5a2ljRjVKMjRoMWs1c0FDNW1ZVlpRZW91aEFPWjVqZVlBbG5tNDAzZ0M5M01uOWIyUGVOczR2Skdpb21jQXBvcnFUaThYR2ZYdXRfV1lmUjkycWkyVWlmZHYwRkttV3hmR3N4ak5QYXhkb29pM2ZGbUUtYktqcGZ5YWZDS0ZMVHVCbVdkSVRjaXg1VVpoanVjZ0VRSlZLby04a2lZT1daV1dwZHE5b0g0OUt3dFh5X3R0UHlfLVRrRmxuQ2FGeFFNZUllWktiSzhjUW92QjBLZ0lSMmQwWWVocEpwazFPelRZT0NyOWRhWVJnRG1LYmJxN3VQNFhyMjlSSEJEdVhhOWFadVJNVFV1cjNfdGxHV0VPTENTU0VfMm5VcVhBQzktM3JseGl4QW9CNHpyMUE0SjBxeHhpbmZvVE9RaEFSZHNaNnU4UWlySlNTT1ZqeDhudnhzbHktVk9iMWZkbTI1WjZ3RFJ6cEFfb1hEMURUODczcFc4bkowZHREamdFTzEwRzlfNDJCM1dLYXJXTGNTdF9hZFNsdXgxYm91aXRmTm5WMzAwVXkydUxlUUFnTW1JcVpYQ3BwWTVFUXlZbUN6cXlYUU1mS3lqTXVvelFXeEpBc3E4REZMLUVWM1JXcXpqMVZTU3UtTFB3X3BSUW1xdXRGdVVkWWRtWXhmUW5wQ1NFUXpHMTBvNmRUTXBLV1pZYnR2ek1vaUZUWXlTcG1yNkZGamdqc2lwTVhiQ2lRdzFKbUd1M254am42aXdnb0daeXNOLVpicWQ3NG5XcV9Ld3I2TjZEdjNjMHY3NTR6c1dxR0dPVUtCT1drZ2VOc0R4dFRodFBlZl9UM3pOQXpfWW03V0RTXzJhVFpFMEU3b0RnN0EyQk41OVB3S0REUHZITEp4VVRBcGxTSXE4ekJ4clNSSkhDSWZ4REV1UFFWQ2FPMEN4OHQwbkFUVGlFeXZKcGJ4b2ZuV29IOWxvSHlhejZ4cl9XZ1Z2SVQyMzloY2kxWG1xYUdCTGNmM0dUYVFJX3dwQ2lST1c0eVFUdjJ5QlotMzR0U3cxeGVTR0ZlWnJXSVNob1ZGejNfOWc4dGtQUEtiRERpdGxZTDZQUjFRb1NlS2tlcWRQUmlUNlE0MjVpZkFvaWhPZ0duYmIxX01kVk04LWE3LWg5QjFwcHZOdkNDRk1VbDRGYlJaNzcyMFZKTTRBelFGR0tqdVBxejNRU3A5LUU=)
+        track: beta
+
+  react-native-ios:
+    name: React Native iOS
+    max_build_duration: 120
+    instance_type: mac_pro
+    environment:
+      vars:
+        XCODE_WORKSPACE: "FoodOrder"
+        XCODE_SCHEME: "FoodOrder"
+        APP_STORE_CONNECT_ISSUER_ID: Encrypted(Z0FBQUFBQmdUc01VYUpIQ29hMUNkS1FhRGUzdHplRDIzcDBOVkpwTndBajNnSlhBd19VUEdxSlBpM3JHMFhxQnE5M21wdVJGcUR4WVJrQlQ0NUpma0lkVVpNRzFDMXFMbjB0a21YRlI5TWJvVHZPWlBXZFZEUFRmbjMxcnE1enJzQXRFN0txS0xIMmQ=)
+        APP_STORE_CONNECT_KEY_IDENTIFIER: Encrypted(Z0FBQUFBQmdUc01vODI0N2JlQXBZdVI5RXBRX09GT3JpcXB4MS10b2NnUDlzeVJuZ29PZDMtQ2VJQ0M3QmVKMnZtazNySDdGMTBHQktNcERuWkNrWTFXRUhKeFBxQXgyYXc9PQ==)
+        APP_STORE_CONNECT_PRIVATE_KEY: Encrypted(Z0FBQUFBQmdUc0t1cHZCRndackotR2Nhb1E1d0RCaWRteXk4MHZianExVUdkSEdOSl9KTFhSX1ZaR3Z1Ti1iMGFWc0VTdmRaYjk4bnhUYjNHaVhzeGlTZGtOblJWUUd2ODRCdng3bjVVRnlydlhTTzRWVzR6RUg1MndWOV9mNDlxQ2tyNHBiUUh1UUFDVjZKQXZtYnB1Z2ViYmRrWmVfUVFXWUFLVVA3UDBheTIwYktZUkxMc1A5dmxtTjR0U201TWZZMW1rUXdGRTVmQVNsaG1vZEdnRkl5czExc2dpc05jRzlQaExLR1BSNjRfbUkzdzJYeWsyZzNmUkhUNWZYZTRSVVpEQnZlSk9ob3JaQjdDa3EtYW13T0RfTVcwWEFVNk5jb29HcW9IaVJXWVMxRl95XzJ2WTlHeUxrdkQxcUhwUTRCMkcxT0stOC1qNXBPT21BVzJUUWdxT1lnVXhSRk1zRTdVUVRnZXpMdHZqdkVVd1N4MTFxak44NVJfazV5SFNtMHNzMnlyaFhjd3hMS1E1RTN2UHRlOHdjaTU3dUl6QkZBbmx3R25ZVEhsR3BYWUpraS02UT0=)
+        CERTIFICATE_PRIVATE_KEY: Encrypted(Z0FBQUFBQmdUc09YVVRXT09OWHE1cDhQSldoR1hid2NRTFRncXhDczdPa21qRDllNVE0YUU4Z0s3THpxMlV0OHd2eEt2ZHJaSExXUUN1SDlmQ3ZZOHc0VjlsRzFNM1NaX3VZQllOS2J0WUdZdUZhcXM2V19RcEt1U1lULW02Rjg1bjkzR3pfNXZ3Ni0wWkIyc3NCT3NscnNwdFRZMWEyOUQ0VDhDZEVxdDRieE9LR2lBWlVmb1pWeWlHbU9Ja3JQdjU0Y0VsRjlrWElYUllneEhsb1hKejlvdHRnYkNlVjF6bUtObWUyZ2FGb3o1c3RvX3dkNi12aGFWYmZNbTgzR0hyRU95V0hCeEpFRng5SnhGV1hlMU9nSWZRaDlETXRXM3RxUTN4U2wyNTF2TzNUS29wVHRyWGd3Nm9PV0JGNUR5ek51dXNhd1ByZHFCdHh5YWpHaXF1Wi14bDBTTldiTXJXVWdVMmJCU3dsR2hsYlhwX1ZDN2tXWE9oR0RQN255TmJ5WElBMVFObmFFOHhMaHRCT1Q4eW5JQjRKUlVxX3ZCNDYxRlp5cklmdFBJU1BYTTNXZUMxM3p6eW85X0ViZ21wa2dyZS1tRFRIZF9vR2FwN0JpdUpRc3d4MDZEVU1vUHh2XzBCbXlxZmUya2FwYmh4aEh0aDU4TEJHMFp2Z1hEUk1JVmlodHMxUkVwVEg5VzJSeWs4X3FXdFhscFl0cFNHSW5yaEFoOGF1UENjS1UzUGJkSjk1RXlRbEhuam1aeDRXaFFWaEpvS19KRFdLcGFPYk1fNllVcXRNcXMzT2kxOU94T05pMDQxSm9DbEZ2RWNSRWxVN0xPSzI2TlpDcnItbmdLNFgxVGJBU1Zvc3kwYzRfQTV2Zzktbk82eWoxUlFSZzdzVWNEREpXZ21uWURXY0E3ZllabDFaaFRBWjAyTTRQd1A4cl9fMEREanlrVTJaenhxUzR3S2V0ZGlURVdUaDM4eXhVRUpNQV95VHZJSElVVXpRWWpqb2lYU3VKaXpXOEtKS2MzVGZPdFlYT2VNZXlKeDhIazlJcGdtN3VsSmtsUlZ6ZjBEdG95MkJpX2h4SEMxY0Vkbmw2c2hBbkh4U1BsMGo1WVNnQm5DbkRFdlNRR29YeDN6aHRFWE5icE51SC11RkNid2R3NDZjRTdkdHZrWFBFS2tHdGNtVjdVUHFuUFVDdHNtM1htSDlYY0V1Ym5teXAwRlFCWm01djNVcHdLSTNPVDhlSy1WdVNncnVXUUhnNlNhZVpXUExTWEVwMnBuVFlpcHMyc0RKbUFwS1pKQVRKbmZvTzFiWHZXbU5yTndNbHZrSjJQVnFTdnRIU2VEUy1MUFc4b3daak5uT1JLdGNYMmQxUDN1dXhnT2lUMHQ2U1F5aFZHUW43MlVvdEVHMkxCZ2ZaaEdtUV9tdzQxcnpSenV1RE0wSGR0Yk5OTDlFdTZBM0M2eERKVTF1OEwzSGNJQUxzdVp3c2FnM0t0UXVSWlVSVnJjYzQ2aU91azV5Yk9JUXNKeVZFck9ndHN6OUdudEFXRG9WREJZVWoxb2c5WS1XeTlNNnpkTm9lNXVobktEUVNJX0ZadXFxQ3g1c0pHNnZLYVhibklkTjZmQVpPRGVqcThfMWZ3YW9ENFBJU3l0dGlNTzZyeTBsQklmTm00SDVYSlpvbnVGQ3JsUjQ1Mk12bzQ5V2NuaVh4YUtNaGozSkU3YVl4cVRZNURqMmEydk02QUR0SWUxMDZQa3B4cVhRUEN3N2JDOTMtR0pMV0lIWXc1RTlUYkt0NFhWel94Q0JUb3FFTDFNZWFEWENkZDR3Q2ZWaHlsdEpDWTVHZWc4bU52eWJCdDAzNG53Q1ZxSFBDLXNrQW5vcGZmYXRQeElfMmxLMm9jNjM5WHNOLUNoMVlZZjRDbjdiZDI0N1JqQjdramhQc054SFNyTGIwZ2NvMFBzRFNGRjZqakRhMm82NGpLa09zN19iZW9SX0xNXzZHMmFtYXFqei1WQkdpU0VMSHUzWTJXNlF1T01SNzlUZThDaTNhV0dvZTlfVU1YVHhrQ1ljcDU3a19fU1JScWpOMnlBaWpBSU1XaHB4aWlUWE1UN053NWlWbTVfdl9pX3NXNGYtNmdvdHVyU0c4NllpMFVNdDY1X2VKSzVlQW5YLTlQSzk3dEN3N1FDSUFXMWstRmFoRkFpR2hLSzlQSmMxSXFnU3VtSEIyU1dnaG1IdkVIMEp4UDR4a0NpdUs2X3FIRFFab3RKM1RxVGZNYlRCZWU2U0hZMmVrNVhaWHJ1bl9RSVE5QWE2TlNTWkRxbV94NkVQc3pSQTM1eU5PckhGVEVMOFVQZDdlQ1k1LXRzR0xZXzhpYTRnWmk4MHJlQUJfT2IxSlF4QllNOU01MnVJNGhOOG1hZ1VpcURmR056ajdKOWxNRnhmdTNLdmtCS3dOTlVxbWhJb0I3RG9DV1JPM0RmSjloVUtHbXdOdlJud1hEekxiYUhGalhTbUhuZExVLW5WejdvVlJGaDFRY0pwQWZrM25BNHJrVU5CZGk2TE42LWtHSFo2T2g0dXpiZE0xQkR4amktdW9nMVZnTlQ5ZW9reFlYbnJjamxfYjNmZkRZUXI1TjExemlzQTluMW5GQnBVX2RkemNmVzZWY3JudkNrRjN4SFR3ZWZnZVFacE96dzB2S3N0S2pvUXItSDV0dDdLUk16TmpXNUUzNGlxX0NVYlBxN3dSQzBiQ3lvWEN4M3dJMkFVUkxXbEh6b21seGJNcG9RLTdhdkNaMFNheGFvbi1RbUZZQ3JDTEtEei1ORFN4ZDRLV1FaOUtSSVFVaDVsMHhMMnVVcHNzLTg1TER0dHdiM3ptcTMwU2h5bXJJeHQ1aTJyY3ZQUTN1NElYTFhkaDQ5NGgtSWRSSVlOMWpnRklVcHNuM05TS3NDVVRZdmE0VlF4cFB1cFhPSVhaMnRPYkhVS0VfRktzMjRDNXhnZkVya3A3QVJNQUJVQUJtbURyX2NQbFk5OVJjekp0MTdrWXVoWTNlbkJvMkFUcHdqWm1nU2tFcnYzcGZ5VDFrTjdrMHFheHU3UnNnSkot)
+      node: 16.15.1
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - *download_assets
+      - *replace_bunlde_name
+      - *replace_app_name
+      - *replace_merchant_id
+      - *replace_google_service
+      - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
+        script: |
+          keychain initialize
+      - name: Fetch signing files
+        script: |
+          echo "$BUNDLE" $APP_STORE_CONNECT_ISSUER_ID $APP_STORE_CONNECT_KEY_ID $APP_STORE_CONNECT_MANAGER_PRIVATE_KEY
+          app-store-connect fetch-signing-files "$BUNDLE" --issuer-id $APP_STORE_CONNECT_ISSUER_ID --key-id $APP_STORE_CONNECT_KEY_ID --private-key "$APP_STORE_CONNECT_MANAGER_PRIVATE_KEY" --type IOS_APP_STORE --create
+      - name: Use system default keychain
+        script: |
+          keychain add-certificates
+      - name: Increment build number
+        script: |
+          #!/bin/sh
+          set -e
+          set -x
+          cd $FCI_BUILD_DIR/ios
+          # LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number '1558352293') # The argument is your application's Apple ID
+          agvtool new-version -all $(($BUILD_NUMBER + 1))
+          agvtool new-marketing-version "1.0.$(($BUILD_NUMBER + 1))"
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+      - *replace_team_id
+      - *replace_merchant_certificate
+      - name: Install npm dependencies
+        script: |
+          yarn install
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios && pod install
+      - name: Build ipa for distribution
+        script: |
+          xcode-project build-ipa --workspace "$FCI_BUILD_DIR/ios/$XCODE_WORKSPACE.xcworkspace" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      email:
+        recipients:
+          - roy@sudzy.co
+        notify:
+          success: true # To not receive a notification when a build succeeds
+          failure: true # To not receive a notification when a build fails
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_MANAGER_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        submit_to_app_store: true
+  
+  react-native-ios-test:
+    name: React Native iOS Test
+    max_build_duration: 120
+    instance_type: mac_pro
+    environment:
+      vars:
+        XCODE_WORKSPACE: "FoodOrder"
+        XCODE_SCHEME: "FoodOrder"
+        APP_STORE_CONNECT_ISSUER_ID: Encrypted(Z0FBQUFBQmdUc01VYUpIQ29hMUNkS1FhRGUzdHplRDIzcDBOVkpwTndBajNnSlhBd19VUEdxSlBpM3JHMFhxQnE5M21wdVJGcUR4WVJrQlQ0NUpma0lkVVpNRzFDMXFMbjB0a21YRlI5TWJvVHZPWlBXZFZEUFRmbjMxcnE1enJzQXRFN0txS0xIMmQ=)
+        APP_STORE_CONNECT_KEY_IDENTIFIER: Encrypted(Z0FBQUFBQmdUc01vODI0N2JlQXBZdVI5RXBRX09GT3JpcXB4MS10b2NnUDlzeVJuZ29PZDMtQ2VJQ0M3QmVKMnZtazNySDdGMTBHQktNcERuWkNrWTFXRUhKeFBxQXgyYXc9PQ==)
+        APP_STORE_CONNECT_PRIVATE_KEY: Encrypted(Z0FBQUFBQmdUc0t1cHZCRndackotR2Nhb1E1d0RCaWRteXk4MHZianExVUdkSEdOSl9KTFhSX1ZaR3Z1Ti1iMGFWc0VTdmRaYjk4bnhUYjNHaVhzeGlTZGtOblJWUUd2ODRCdng3bjVVRnlydlhTTzRWVzR6RUg1MndWOV9mNDlxQ2tyNHBiUUh1UUFDVjZKQXZtYnB1Z2ViYmRrWmVfUVFXWUFLVVA3UDBheTIwYktZUkxMc1A5dmxtTjR0U201TWZZMW1rUXdGRTVmQVNsaG1vZEdnRkl5czExc2dpc05jRzlQaExLR1BSNjRfbUkzdzJYeWsyZzNmUkhUNWZYZTRSVVpEQnZlSk9ob3JaQjdDa3EtYW13T0RfTVcwWEFVNk5jb29HcW9IaVJXWVMxRl95XzJ2WTlHeUxrdkQxcUhwUTRCMkcxT0stOC1qNXBPT21BVzJUUWdxT1lnVXhSRk1zRTdVUVRnZXpMdHZqdkVVd1N4MTFxak44NVJfazV5SFNtMHNzMnlyaFhjd3hMS1E1RTN2UHRlOHdjaTU3dUl6QkZBbmx3R25ZVEhsR3BYWUpraS02UT0=)
+        CERTIFICATE_PRIVATE_KEY: Encrypted(Z0FBQUFBQmdUc09YVVRXT09OWHE1cDhQSldoR1hid2NRTFRncXhDczdPa21qRDllNVE0YUU4Z0s3THpxMlV0OHd2eEt2ZHJaSExXUUN1SDlmQ3ZZOHc0VjlsRzFNM1NaX3VZQllOS2J0WUdZdUZhcXM2V19RcEt1U1lULW02Rjg1bjkzR3pfNXZ3Ni0wWkIyc3NCT3NscnNwdFRZMWEyOUQ0VDhDZEVxdDRieE9LR2lBWlVmb1pWeWlHbU9Ja3JQdjU0Y0VsRjlrWElYUllneEhsb1hKejlvdHRnYkNlVjF6bUtObWUyZ2FGb3o1c3RvX3dkNi12aGFWYmZNbTgzR0hyRU95V0hCeEpFRng5SnhGV1hlMU9nSWZRaDlETXRXM3RxUTN4U2wyNTF2TzNUS29wVHRyWGd3Nm9PV0JGNUR5ek51dXNhd1ByZHFCdHh5YWpHaXF1Wi14bDBTTldiTXJXVWdVMmJCU3dsR2hsYlhwX1ZDN2tXWE9oR0RQN255TmJ5WElBMVFObmFFOHhMaHRCT1Q4eW5JQjRKUlVxX3ZCNDYxRlp5cklmdFBJU1BYTTNXZUMxM3p6eW85X0ViZ21wa2dyZS1tRFRIZF9vR2FwN0JpdUpRc3d4MDZEVU1vUHh2XzBCbXlxZmUya2FwYmh4aEh0aDU4TEJHMFp2Z1hEUk1JVmlodHMxUkVwVEg5VzJSeWs4X3FXdFhscFl0cFNHSW5yaEFoOGF1UENjS1UzUGJkSjk1RXlRbEhuam1aeDRXaFFWaEpvS19KRFdLcGFPYk1fNllVcXRNcXMzT2kxOU94T05pMDQxSm9DbEZ2RWNSRWxVN0xPSzI2TlpDcnItbmdLNFgxVGJBU1Zvc3kwYzRfQTV2Zzktbk82eWoxUlFSZzdzVWNEREpXZ21uWURXY0E3ZllabDFaaFRBWjAyTTRQd1A4cl9fMEREanlrVTJaenhxUzR3S2V0ZGlURVdUaDM4eXhVRUpNQV95VHZJSElVVXpRWWpqb2lYU3VKaXpXOEtKS2MzVGZPdFlYT2VNZXlKeDhIazlJcGdtN3VsSmtsUlZ6ZjBEdG95MkJpX2h4SEMxY0Vkbmw2c2hBbkh4U1BsMGo1WVNnQm5DbkRFdlNRR29YeDN6aHRFWE5icE51SC11RkNid2R3NDZjRTdkdHZrWFBFS2tHdGNtVjdVUHFuUFVDdHNtM1htSDlYY0V1Ym5teXAwRlFCWm01djNVcHdLSTNPVDhlSy1WdVNncnVXUUhnNlNhZVpXUExTWEVwMnBuVFlpcHMyc0RKbUFwS1pKQVRKbmZvTzFiWHZXbU5yTndNbHZrSjJQVnFTdnRIU2VEUy1MUFc4b3daak5uT1JLdGNYMmQxUDN1dXhnT2lUMHQ2U1F5aFZHUW43MlVvdEVHMkxCZ2ZaaEdtUV9tdzQxcnpSenV1RE0wSGR0Yk5OTDlFdTZBM0M2eERKVTF1OEwzSGNJQUxzdVp3c2FnM0t0UXVSWlVSVnJjYzQ2aU91azV5Yk9JUXNKeVZFck9ndHN6OUdudEFXRG9WREJZVWoxb2c5WS1XeTlNNnpkTm9lNXVobktEUVNJX0ZadXFxQ3g1c0pHNnZLYVhibklkTjZmQVpPRGVqcThfMWZ3YW9ENFBJU3l0dGlNTzZyeTBsQklmTm00SDVYSlpvbnVGQ3JsUjQ1Mk12bzQ5V2NuaVh4YUtNaGozSkU3YVl4cVRZNURqMmEydk02QUR0SWUxMDZQa3B4cVhRUEN3N2JDOTMtR0pMV0lIWXc1RTlUYkt0NFhWel94Q0JUb3FFTDFNZWFEWENkZDR3Q2ZWaHlsdEpDWTVHZWc4bU52eWJCdDAzNG53Q1ZxSFBDLXNrQW5vcGZmYXRQeElfMmxLMm9jNjM5WHNOLUNoMVlZZjRDbjdiZDI0N1JqQjdramhQc054SFNyTGIwZ2NvMFBzRFNGRjZqakRhMm82NGpLa09zN19iZW9SX0xNXzZHMmFtYXFqei1WQkdpU0VMSHUzWTJXNlF1T01SNzlUZThDaTNhV0dvZTlfVU1YVHhrQ1ljcDU3a19fU1JScWpOMnlBaWpBSU1XaHB4aWlUWE1UN053NWlWbTVfdl9pX3NXNGYtNmdvdHVyU0c4NllpMFVNdDY1X2VKSzVlQW5YLTlQSzk3dEN3N1FDSUFXMWstRmFoRkFpR2hLSzlQSmMxSXFnU3VtSEIyU1dnaG1IdkVIMEp4UDR4a0NpdUs2X3FIRFFab3RKM1RxVGZNYlRCZWU2U0hZMmVrNVhaWHJ1bl9RSVE5QWE2TlNTWkRxbV94NkVQc3pSQTM1eU5PckhGVEVMOFVQZDdlQ1k1LXRzR0xZXzhpYTRnWmk4MHJlQUJfT2IxSlF4QllNOU01MnVJNGhOOG1hZ1VpcURmR056ajdKOWxNRnhmdTNLdmtCS3dOTlVxbWhJb0I3RG9DV1JPM0RmSjloVUtHbXdOdlJud1hEekxiYUhGalhTbUhuZExVLW5WejdvVlJGaDFRY0pwQWZrM25BNHJrVU5CZGk2TE42LWtHSFo2T2g0dXpiZE0xQkR4amktdW9nMVZnTlQ5ZW9reFlYbnJjamxfYjNmZkRZUXI1TjExemlzQTluMW5GQnBVX2RkemNmVzZWY3JudkNrRjN4SFR3ZWZnZVFacE96dzB2S3N0S2pvUXItSDV0dDdLUk16TmpXNUUzNGlxX0NVYlBxN3dSQzBiQ3lvWEN4M3dJMkFVUkxXbEh6b21seGJNcG9RLTdhdkNaMFNheGFvbi1RbUZZQ3JDTEtEei1ORFN4ZDRLV1FaOUtSSVFVaDVsMHhMMnVVcHNzLTg1TER0dHdiM3ptcTMwU2h5bXJJeHQ1aTJyY3ZQUTN1NElYTFhkaDQ5NGgtSWRSSVlOMWpnRklVcHNuM05TS3NDVVRZdmE0VlF4cFB1cFhPSVhaMnRPYkhVS0VfRktzMjRDNXhnZkVya3A3QVJNQUJVQUJtbURyX2NQbFk5OVJjekp0MTdrWXVoWTNlbkJvMkFUcHdqWm1nU2tFcnYzcGZ5VDFrTjdrMHFheHU3UnNnSkot)
+      node: 16.15.1
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - *replace_merchant_id
+      - name: Install npm dependencies
+        script: |
+          cat ./GoogleService-Info.plist
+          yarn install
+      - name: Install detox dependencies
+        script: |
+          # brew tap wix/brew https://github.com/encointer/homebrew-brew
+          brew tap wix/brew
+          brew install applesimutils          
+      - name: Install detox-cli
+        script: |
+          npm install -g detox-cli
+          cd $FCI_BUILD_DIR && yarn add detox
+          yarn add jest-circus@26.6.3
+      - name: Install CocoaPods dependencies
+        script: |
+          cp e2e/Podfile ios/Podfile
+          cd ios && pod install
+      - name: Build with Detox
+        script: |
+          detox build -c ios.sim.release
+      - name: Test with Detox
+        script: |
+          detox test --record-videos all --record-logs all -c ios.sim.release          
+    artifacts:
+      - artifacts/**/**/*.*
+    publishing:
+      email:
+        recipients:
+          - roy@sudzy.co
+        notify:
+          success: true # To not receive a notification when a build succeeds
+          failure: true # To not receive a notification when a build fails
+
+  react-native-android-test:
+    name: React Native Android Test
+    max_build_duration: 120
+    instance_type: mac_pro
+    environment:
+      vars:
+        FCI_KEYSTORE_PATH: /tmp/keystore.keystore
+        FCI_KEYSTORE: Encrypted(Z0FBQUFBQmdUcm1zUzFtRGZvM2FrSzdQQzFnTGdFYjhCZXNGNFNvRGQ5OWRHa1VMSGpGWVFQa3RmNkEzTC1wOWg1bHhEVFI1SEQ1RjNCd2RMbDkxZk5rWDFZSzdGdTJsTFNpZVJTbnpWUXVzb01qamp6YUo1OW9OSnBNajlBc1p5VVVwaUJtUjY2by1HcmtOejBJcUZRNkRmNjQ3Y3g1MG1vYlM2aFNDNHkzanZJcFJwN1dJWExZdEZCTWFsMjJPWXpNcXBwSmRSYWFpWkloRmJMMmdiM3BKOVlIX1BVR2VMbkhhOUJ3eF9DX0E2bVNQSVdSMFJpb0hRTkFQbTI2dVJ1bldjUU14NHgzYk9fWkFKS0FzYzRfZ2VfcUpORVl2RnIxbTNGZjMtVHdzRnFBbjFnNnBmWElmbDFHR1hvZDY1NlI2cjVGckl1am1NQ3dRdzZUSGRDeHM3OV8yenpucGRGVVlKd1RwSVAyYmxxcXR3bGJYRkdZZU1jeEcwUTJGcG5hOVZUcGd2UjBOYmJYeFZKQjJ0dG02NnpBSU1uWWIySDRUc3d3QU1qNEt5ZFFaM3R6ZWVoOHpWVTlvd01kZW82V1ptd0FjNDUwZkJkcHM3dW93Ym42S1V2X05tc3V5UUFIZU1neERxUTZVVEhFT0JVVmVwX3poUTNXMmJfdjF4Z0w1X3hBQ0hUVDg0VERKZmdpdFZDV1QteTBpNGZhVTNaZU1DbUpSRi00a1dlQmQwUlpNc2Q4TXRoeVJlQ3RZNUNMZDdNeC14bGxrcER1OV9YVjJLOG55WTlhbTNUOF80Ml8tampnUkRKMXdPMGFxMVNMelgteVd3RC1CNVFReTJJTzA0R2lFdDdZbzQ0UWJMaWdXa3FiWWlCMWxfcHJ2OEhiNU1saUFmLWJhMTZ0QTk4eEZzbGVvQTRVZTdJN01KbTQ2dnJ6M1huOVFqSzExdnVEWllsUUFoNzU2TThOWDRWcHR5UUV0N014UTZDeXBvaEpjZUFaZnVuWS1iRG5zcGRvZEV1WGJ1T3R3cTVLM1liRkR0VmkyOFV4MXkzdFI2ZHBxekUyMnlKQVhDaVdFLTN5c2xvLUZqM0toR09nVmtfeVNmWGNURjluMkxNWWxFY2xrYjRnRDNIa2ozOXFpMTNiQnF5WF91M0drMERBYmt1UlpCUnRvZHZKS1UxUDYyaGNmcElRZzRtTEd4RXBEOWhYWW1NaXJHNHZ5ZUh1b05aVGVfaElDUERJaDBxTnpxWl9hVEFBZHNyMWl4Uy1KOS1qTkhmMm94dE1PQjNnVGdNVFFJQ3hUU2ZnMDNYenVHNk1PN2hwMlpFRkxxMlo1cGxQQkYyZ21SUC1zNEVLLWVyZWdTTjVRZlB2NjR2VkVSbE5zMmtkQ0UtcDhOUVNHdVB1NkNma0tmaDJ5Z21fSkVWTjBRb05VVnBPVWF1ZTFSekFoY2xmbGd2ZVJKc3RMMF82NDBQSU5uMjlNNzBmSkxPNkJDUzJwU1h0Q2ZYMFNyZ0V3amRSWDJaZ3ZXUS00ZVJPR3hPTmE0TXc0SnFFMmlfSTdZUlhlZXJ4OUxCUE1IaU5DNWY4dzVPT2QyYjgxTVRPajVuUFNvekVubjJLWThOM2M3Z3NwQXpmVVMxUjBQc1E5azVCN01qZEtMVTBKMjV2LWJldDU5YkxqS281R0p1emNTWEYxRXItcU55OWgxTU11TnlycVdtQkthaHB0ODdzQ0RPX2dtck5MaEtEY05WdUVsbXFBd3czSTktWEh3bl9sZmgza19ma25BOGFhTFFkVC12bDktTy1HYjhSZ0ViMmdUSXZJZHFydmFlaTNHZmpZNXp0WEpFNmx3bnVubzJDVGhETXNtdWhhenMyWFF5dDFqUW4zTFJhbEVWUFdnYURWc0xLSDg5SXRobGtJUVJpQmp3bGNlV2RLUk5nYi1mX3VWcGlIdUQzQjhVbF9xdUpPM3dFbFRrbERNeko1U2ZLLWJENmdVTmVqYi13cmszSU5qVUYycktYdldxc0pySFlmSjBKdW1GZmZrVTN6aFVlUkxXa3pLaEhMRDFzd0VIYUNSZUNLZkYzTmhMRWFwVGo0SnNzYS1HZHk3SW5CMnFzakVZOHFxM3J2dVUwTUVKb1E2R280dFZsNmVXd1p5cER2NFk2OFhiSFVmb293RHB1NFdMS0xuRWFyQXhKQy1Fb1hWdXhVb29nLV93WUl6dXhVdmhjeXhVRTlUZkFYbmxkaXd2S1FRUWlUVmdyQ2pmRGs1ZVg1a05hQURJMGl5anBKSl84Yjl2Z2FMMTJNbm50ZUY1STRla3ZzQmwta3VGSmVlMTVWdjVKTDBBLWFtZHloc2RTQ2VDVkxyWFlsVHZ1TTBrWTZ0czV1VDRYTFVxRXBRUzdXa2NiTnlVanY3d0JlQU5YclBUdll6bjBmTlB5QkJPZ0NNUGxSZTQzcUlpSFJLMkk4UFRZR1lCUEFhN3VnUmM1MGM2anUxb1UwRWZRVnJZX2NiUWlPWWI2SmVmR3llMFV0U1dFNGVVcGRKdl9ZSmtKMHp3cFo3UlljOTFsUm1jZ1JyRUhLMGJDTEhUU3BYQVBXZlNxS2lwbzFjQWJUb19GN05jc2RqMjFvQkQ2b09VV2pNTnQzajJvZzR6RmpzdnhjQjFlRXhVbkp0aFRRTTBjNVg0RU52dElDVWdqWEpjcFFqOWQyVkVMME53MzRkaFMxMXRKLTlLUjMyZG0yZlJHdUZfalppQ0xyeVFUeWRnNUxmRjdRRE5UTXNYVGNjbzllVFhSVlgxbnBjcm9rdTNseXZ5TzVicm5rZ2Y1ZTVZY2F6QnhqcnQ5M1I0SWE2ME10WDdJREdhakZmeTNNRUFxaXpMNHNFTHZWbWhQT21aOURCaHBOZjZROWxjaFRZYXhQVGVRaEFZci16WUhKQ25CTmZEMkxMUEJBc29EVUJ4ZjBpZTNqdzIxMGNIVktNZU5YdFZlNzlWQW9mZWU3cEppSVQzX2NRelVkbzducTgxbnQ0aUtzcUNVZWo4N3ZRWmVoaWVrQjNfRFJ2bVMyZ2JJbGpvdEhSWFlvYk1BSnQ4M05DUGd4bUxwSFBwbU5zNjQzR0R4UGpvSE5lUHZPT2NnQ0hzRDZSd0J2M2h3NlhuMzZQZ2RiNmczdmotNzIxS2tydmQ4c1JERGFkV3Y0a0VRSVRKblhDcTRpeVFpYzBGdU81MENVelRiVVlTSmFlRlZvbWdMbzZJdUJEWFpWTkNBcHRhYWtsV19jOHFJaURnSGRhRGZhb1BUcnl6UzBhbmZ0c25zZFY3Zlc4ZzFjUXVHdzZXWUJMSEhrdHRqU3JEeVFsUUpnN28ya1J2Tks5bjFlM19aRXA3WHllMDRBdlNjZEptYkx2a1ZiRnFuZDFoLWZQZ1R1bHFaRjh4czZfWlg3ZG1ZSS1XTU5CT2ZzTmUzZ3NqWDRHVVlRMHRVcTZzSEJrR3REX3lNSEVwVHUtNmtaTnE5WkFad2o2cDRWZk8ycEswYlBkQUMxeFhwZi0zbnFrNHY5TnB4eXVPenlKR1FoMVFQU0xQeWlpWmFHTWVnNVlEVVExb0pCczVPVkNwb3ZwXzlMT2FZaS1hSDhWdnljTkdxYnJ6c2NOU3hHRGY3cUxacXcwZHdJM2dXOEd0a0tXbGlrYVNGZHBOQ1JCZVlRS2lmZHFxa2hMZ0tfczJDZTlqYjlkZFlWSE4ySU5veVJRVjhQc1dSYmtTWksxdXd5LUptVFpaUzgyZG1jZUdGOVdKWkEwZnBBQWZUMmxXdkl0S2Q0eGRIRVg0VTlzc2IzYWs2QjRBR0pfMTdaX0lRdzlycHdBN19zb3BIQU5QMzhjVGpIYnJuazNUZkFxaWkyWTE1MXo1NE40SmdNeS1paWoxWnlyMVhpTlF3SU1vQ2duaDBuOGMza3ZlVG5kcXNHQkJEMVIzVFJlQllKV1V5VzRrN1dtQnZVV0N0cUcyZ0djMTkzX0NjTS01eDhXaXRLUDYzYWR6c2ZyQkNNZHhvMjVzUGdsWUFhdVNSU29iU2ZZeUhENDAwNFhFNzlOZms0bEtGelVLVVpkX29aQmdHT0hLUGppeDJIM1hyUHR4MXM0SHhGamc3NEVlUXpaVWp2V0swMDd5RkJsWTBuM0Zia1dTdVVnWVJVcHNJVW9TZllzdWRLTjB5aVpqcDhaYXp6dzZ2dDNJUFNPRU5CalI3RjNNV3pzTEVaeUFkUnBPUm55Z3lVYTV4LTl2U0VMYWJGWXI2a0JiY3ZNczhMQTdpa05aakIyODBUcDRWam10aXR5YlpoV2dVRHFwOVVRZktxdno3azJoUW15WFVoMF9BU0pYT1NfTFZIV1lsc01nalZOVDdpREszZ25YOVp3WF8xR2hGYkpYbmdmeXpMY3lMY2hjc3RYZzM5TXdnWFBnUWxNUWdraUxvaDJOTTZiY3doWVgtaXpDX1hZZ2txMVRGdjhLSERGTFZaNG5rS0ptdl8yVUlJT1cxTjZGUTZWcnJ1bFJoN29yN0Y0dXB1MzRzUlRtcG1oT1YtWEJUSGN1bkloanZKQjBVZUJRTlR2akpEakhuWFl1eXhaaGVQbHVreFpGclJ4RDVMb29PZ2hZbU9QWnk0bGxKUUM0cFZlZFVlTDk1M1A1bDNKN0puYUktNmt6MkdUZkd5U25lM0d2SXJBYnk2UjNfc0xjU0dKYUV4NWR0R3FTeHlIa211X2lqZElncTRYQkVsTzN5b2xKZGF1RjJQMDJUSjJwUERMbS05N2F6LVJnaFB2WGFTYUoxNUY2WlVvR184aGZZa3QwOERpZEZrUDNiZEFHUFNaRzZUR2pPcFFmQkRLcThBU3JDVUl3SXRsbDU0WTYzMWY1dndCdXpibHNkdkdCNzZwbVB4ZTc1NVg4RUhnS0wwVTROazNHcDlLdHdZYUJrMDhycmF4NU00MTNDMjRMRGJYNWdUTDAxQUtocXZxUVlfX0RfeEVzTFNUX1ZEYUpxYVFac1AtX2VsMm9fZUNUMGt0V0F4V2cwS08xdm5ZNHRvVHhjRHlHdXlGMUhDZHkzQjgxM045aXh1UF8yYURpWHJfV2NGMll1NUdnSUxSYTJfRWx5N0dhMGJ6aVJmSE82cW1QXzYyZWprZjgya1hoUkZYTDNMSkxJaFcwd0ZBUE1IX0RBRWZ4dUltSmY4MkNGaEVMNXZmVFlnejJDWnNST0ZHOHZkaUdsdktjWXFUY0xGTTVWR3RXbGxwdnV3aGZVVDlTa0lBdXVuQ1RTR0dMWUlkeUpLRWRIT0lSNDB1RHg4WWFkS0M1cnJUTEI5NlRkTGJsVVByYVRZQ1RiVVlCUTZIcmxsVkZ4emVuczVpTlFrRGFMb1VSc2xab2RXOTJZV1g0Q1ExTzVo)
+        FCI_KEYSTORE_PASSWORD: Encrypted(Z0FBQUFBQmdUcm9RVUl1d3FTY09lZm50WlY2Qi1WOUZhbUJRZHVhZ3ZNelNnT0dOQ2djdU50dzN4SlFrQlFMU243bEVqMlpIXzVUTTBzeGF6Ulp1d1VYNkE3SVJkcldiSFE9PQ==)
+        FCI_KEY_ALIAS: Encrypted(Z0FBQUFBQmdUcm42cWtnWklyYkROa3MyMWpKOGhQbmxOVThSLWRzM0pSWWR2dkc3cENJV1BVcU9NWEd3YmROV1JocXNLeG5uVnV1MGhiWnVFMWUwaDE2cG5Md0dEX0xLaUE9PQ==)
+        FCI_KEY_PASSWORD: Encrypted(Z0FBQUFBQmdUcm9RVUl1d3FTY09lZm50WlY2Qi1WOUZhbUJRZHVhZ3ZNelNnT0dOQ2djdU50dzN4SlFrQlFMU243bEVqMlpIXzVUTTBzeGF6Ulp1d1VYNkE3SVJkcldiSFE9PQ==)
+      node: 16.15.1
+    scripts:
+      - *download_assets
+      - *replace_bunlde_name
+      - *replace_app_name
+      - *replace_merchant_id
+      - *replace_google_service
+      - name: Install npm dependencies
+        script: |
+          yarn install
+      - name: Install detox dependencies
+        script: |
+          ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+          echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/builder/.zprofile
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew tap wix/brew
+      - name: Install detox-cli
+        script: |
+          yarn global add detox-cli
+          cd $FCI_BUILD_DIR && yarn add detox
+          yarn add jest-circus
+      - name: Set Android SDK location
+        script: |
+          echo "sdk.dir=$HOME/programs/android-sdk-macosx" > "$FCI_BUILD_DIR/android/local.properties"
+      - name: Set up keystore
+        script: |
+          echo $FCI_KEYSTORE | base64 --decode > $FCI_KEYSTORE_PATH
+      - name: Build with Detox
+        script: |
+          detox build -c android.emu.release
+      - name: Test with Detox
+        script: |
+          detox test --record-logs all --record-videos all --take-screenshots all --loglevel trace -c android.emu.release
+
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+    publishing:
+      email:
+        recipients:
+          - roy@sudzy.co
+        notify:
+          success: true # To not receive a notification when a build succeeds
+          failure: true # To not receive a notification when a build fails

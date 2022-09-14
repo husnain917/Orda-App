@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "197334463942",
+    "project_id": "dqzcft55j9jj",
+    "storage_bucket": "dqzcft55j9jj.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:197334463942:android:de5426e29b55e5127d6ec7",
+        "android_client_info": {
+          "package_name": "com.square.falafelboy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "197334463942-9srcj5q509fldnp7kq9fbt39kjldi26h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANXjY4H-8_J3vjDrSza0MPbHYLzlWU3rY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "197334463942-9srcj5q509fldnp7kq9fbt39kjldi26h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "197334463942-fvogoc2shpfuna1pg0v1k21p0qn4mso0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.falafelboy"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

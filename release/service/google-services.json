@@ -1,0 +1,344 @@
+{
+  "project_info": {
+    "project_number": "317455480351",
+    "firebase_url": "https://fav-ordering.firebaseio.com",
+    "project_id": "fav-ordering",
+    "storage_bucket": "fav-ordering.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:4fe0c788a97638cac1472a",
+        "android_client_info": {
+          "package_name": "com.square.genospizza"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:1031e2529ed44e48c1472a",
+        "android_client_info": {
+          "package_name": "com.square.kevajuice"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:05cfec2931fe01d9c1472a",
+        "android_client_info": {
+          "package_name": "com.square.kinos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:fe04b404422341c6c1472a",
+        "android_client_info": {
+          "package_name": "com.square.metaburger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:6707ebe00824b47cc1472a",
+        "android_client_info": {
+          "package_name": "com.square.milestable"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:cf8b0a37c5691781c1472a",
+        "android_client_info": {
+          "package_name": "com.square.pollo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:ddc32ee9f16abc10c1472a",
+        "android_client_info": {
+          "package_name": "com.square.sipstir"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:35ac36c29db935a8c1472a",
+        "android_client_info": {
+          "package_name": "com.square.tapnyc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317455480351:android:8f7bba2e07da9f20c1472a",
+        "android_client_info": {
+          "package_name": "com.square.yellowvase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvYajEYrEWjVgHmMVaTKGeq-6GJfcw-94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "317455480351-0ltn6trsf19943u2ob0cv7jm2i38fa7n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "317455480351-3291nmil1eoqbdv3f32538ir1c3tlos8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.square.tapnyc",
+                "app_store_id": "1558352293"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
